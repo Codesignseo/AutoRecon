@@ -1,0 +1,14 @@
+{
+    "Nmap Scan": "-sC -sV",
+    "HTTP Headers": "-I",
+    "WhatWeb": "",
+    "Whois Info": "",
+    "Amass Enum": "enum -d",
+    "theHarvester": "-d {target} -b all",
+    "DNSRecon": "-d",
+    "SSLScan": "",
+    "Nikto Scan": "-h",
+    "Gobuster Scan": "dir -u {url} -w /usr/share/wordlists/dirb/common.txt",
+    "Nuclei Scan": "-u {url} -silent",
+    "Subfinder": "-d"
+}
