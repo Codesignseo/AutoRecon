@@ -206,6 +206,7 @@ def generate_html_report(target, commands):
             h2 {{ border-bottom: 1px solid #444; padding-bottom: 5px; margin-top: 20px; }}
             .pre-wrap {{ background: #2d2d2d; padding: 10px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }}
             .toggle-btn {{ cursor: pointer; color: #7ecfff; font-size: 1.2em; margin-left: 10px; }}
+            .scrollable-output {{ max-height: 500px; overflow-y: auto; }}
         </style>
         <script>
         const commands = {commands_json};
@@ -220,11 +221,11 @@ def generate_html_report(target, commands):
             if (lines.length <= 30) {{
                 return `<h2>${{name}}</h2><pre class="pre-wrap">${{escapeHtml(output)}}</pre>`;
             }}
-            const first = lines.slice(0, 25).join('\\n');
+            const first = lines.slice(0, 50).join('\\n');
             const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
             return `<h2>${{name}}</h2>
                 <pre class="pre-wrap" id="${{id}}_short">${{escapeHtml(first)}}\\n<span class="toggle-btn" onclick="showFull('${{id}}')">&#x25BC; Show more</span></pre>
-                <pre class="pre-wrap" id="${{id}}_full" style="display:none;">${{escapeHtml(output)}}\\n<span class="toggle-btn" onclick="showShort('${{id}}')">&#x25B2; Show less</span></pre>`;
+                <pre class="pre-wrap scrollable-output" id="${{id}}_full" style="display:none;">${{escapeHtml(output)}}\\n<span class="toggle-btn" onclick="showShort('${{id}}')">&#x25B2; Show less</span></pre>`;
         }}
         function showFull(id) {{
             document.getElementById(id + '_short').style.display = 'none';
