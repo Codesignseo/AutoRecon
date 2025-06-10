@@ -115,31 +115,52 @@ def start_http_server(directory, port):
         print(f"[+] Serving HTTP on port {port} (http://localhost:{port}/)")
         httpd.serve_forever()
 
+def load_flags():
+    try:
+        with open("flags.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
 def main(target):
     protocol = protocol_check(target)
-
     base_dir = f"scans/{target}"
     os.makedirs(base_dir, exist_ok=True)
-
     port = 8765
     server_thread = threading.Thread(target=start_http_server, args=(base_dir, port), daemon=True)
     server_thread.start()
     time.sleep(1)
 
-    commands = {
-        "Nmap Scan": f"nmap -sC -sV {target}",
-        "HTTP Headers": f"curl -I {'https' if protocol == 'https' else 'http'}://{target}",
-        "WhatWeb": f"whatweb {'https' if protocol == 'https' else 'http'}://{target}",
-        "Whois Info": f"whois {target}",
-        "Amass Enum": f"amass enum -d {target}",
-        "theHarvester": f"theHarvester -d {target} -b all",
-        "DNSRecon": f"dnsrecon -d {target}",
-        "SSLScan": f"sslscan {target}",
-        "Nikto Scan": f"nikto -h https://{target}" if protocol == "https" else f"nikto -h http://{target}",
-        "Gobuster Scan": f"gobuster dir -u {'https' if protocol == 'https' else 'http'}://{target} -w /usr/share/wordlists/dirb/common.txt",
-        "Nuclei Scan": f"nuclei -u {'https' if protocol == 'https' else 'http'}://{target} -silent",
-        "Subfinder": f"subfinder -d {target}"
-    }
+    flags = load_flags()
+    url = f"{'https' if protocol == 'https' else 'http'}://{target}"
+
+    # Only add commands that are present in flags.json
+    commands = {}
+
+    if "Nmap Scan" in flags:
+        commands["Nmap Scan"] = f"nmap {flags['Nmap Scan']} {target}"
+    if "HTTP Headers" in flags and protocol:
+        commands["HTTP Headers"] = f"curl {flags['HTTP Headers']} {url}"
+    if "WhatWeb" in flags and protocol:
+        commands["WhatWeb"] = f"whatweb {flags['WhatWeb']} {url}"
+    if "Whois Info" in flags:
+        commands["Whois Info"] = f"whois {flags['Whois Info']} {target}".strip()
+    if "Amass Enum" in flags:
+        commands["Amass Enum"] = f"amass {flags['Amass Enum']} {target}"
+    if "theHarvester" in flags:
+        commands["theHarvester"] = f"theHarvester {flags['theHarvester']}".replace("{target}", target)
+    if "DNSRecon" in flags:
+        commands["DNSRecon"] = f"dnsrecon {flags['DNSRecon']} {target}"
+    if "SSLScan" in flags:
+        commands["SSLScan"] = f"sslscan {flags['SSLScan']} {target}".strip()
+    if "Nikto Scan" in flags and protocol:
+        commands["Nikto Scan"] = f"nikto {flags['Nikto Scan']} {url}"
+    if "Gobuster Scan" in flags and protocol:
+        commands["Gobuster Scan"] = f"gobuster {flags['Gobuster Scan']}".replace("{url}", url)
+    if "Nuclei Scan" in flags and protocol:
+        commands["Nuclei Scan"] = f"nuclei {flags['Nuclei Scan']}".replace("{url}", url)
+    if "Subfinder" in flags:
+        commands["Subfinder"] = f"subfinder {flags['Subfinder']} {target}"
 
     if not protocol:
         for key in ["Nikto Scan", "Gobuster Scan", "WhatWeb", "HTTP Headers", "Nuclei Scan"]:
