@@ -64,7 +64,7 @@ def start_http_server(directory, port):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=directory, **kwargs)
         def log_message(self, format, *args):
-            pass  # подавляем вывод логов
+            pass
 
     with socketserver.TCPServer(("", port), QuietHandler) as httpd:
         httpd.serve_forever()
