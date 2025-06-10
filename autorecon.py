@@ -60,10 +60,13 @@ def scan_task(name, cmd, target, results):
     return (name, output)
 
 def start_http_server(directory, port):
-    # Просто используем стандартный SimpleHTTPRequestHandler для логов
-    handler = lambda *args, **kwargs: http.server.SimpleHTTPRequestHandler(*args, directory=directory, **kwargs)
-    with socketserver.TCPServer(("", port), handler) as httpd:
-        print(f"[+] Serving HTTP on port {port} (http://localhost:{port}/)")
+    class QuietHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=directory, **kwargs)
+        def log_message(self, format, *args):
+            pass  # подавляем вывод логов
+
+    with socketserver.TCPServer(("", port), QuietHandler) as httpd:
         httpd.serve_forever()
 
 def load_flags():
@@ -138,7 +141,6 @@ def main(target):
     print(f"[*] Done! Check the folder scans/{target}/")
     print("[*] HTTP server is still running. Press Ctrl+C to stop.")
 
-    # Остановить автообновление в report.html
     report_path = f"scans/{target}/report.html"
     with open(report_path, "a", encoding="utf-8") as f:
         f.write("""
