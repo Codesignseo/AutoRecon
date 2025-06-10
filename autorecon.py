@@ -59,58 +59,9 @@ def scan_task(name, cmd, target, results):
     update_results_json(target, results)
     return (name, output)
 
-def generate_html_report(target):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    html_content = f"""
-    <html>
-    <head>
-        <title>Scan Report for {target}</title>
-        <style>
-            body {{ font-family: monospace; background: #1e1e1e; color: #c5c5c5; padding: 20px; }}
-            h1 {{ border-bottom: 2px solid #444; padding-bottom: 10px; }}
-            h2 {{ border-bottom: 1px solid #444; padding-bottom: 5px; margin-top: 20px; }}
-            pre {{ background: #2d2d2d; padding: 10px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }}
-        </style>
-        <script>
-        async function fetchResults() {{
-            try {{
-                const resp = await fetch('results.json?' + Date.now());
-                const data = await resp.json();
-                let html = '';
-                for (const [name, output] of Object.entries(data)) {{
-                    html += `<h2>${{name}}</h2><pre>${{output.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}}</pre>`;
-                }}
-                document.getElementById('results').innerHTML = html;
-            }} catch (e) {{
-                document.getElementById('results').innerHTML = '<i>Waiting for results...</i>';
-            }}
-        }}
-        setInterval(fetchResults, 2000);
-        window.onload = fetchResults;
-        </script>
-    </head>
-    <body>
-        <h1>Scan Report for {target}</h1>
-        <p>Scan time: {now}</p>
-        <div id="results"></div>
-    </body>
-    </html>
-    """
-
-    base_dir = f"scans/{target}"
-    os.makedirs(base_dir, exist_ok=True)
-    report_path = f"{base_dir}/report.html"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-    print(f"[+] Report generated at {report_path}")
-
 def start_http_server(directory, port):
-    class QuietHandler(http.server.SimpleHTTPRequestHandler):
-        def log_message(self, format, *args):
-            pass
-
-    handler = lambda *args, **kwargs: QuietHandler(*args, directory=directory, **kwargs)
+    # Просто используем стандартный SimpleHTTPRequestHandler для логов
+    handler = lambda *args, **kwargs: http.server.SimpleHTTPRequestHandler(*args, directory=directory, **kwargs)
     with socketserver.TCPServer(("", port), handler) as httpd:
         print(f"[+] Serving HTTP on port {port} (http://localhost:{port}/)")
         httpd.serve_forever()
@@ -187,6 +138,15 @@ def main(target):
     print(f"[*] Done! Check the folder scans/{target}/")
     print("[*] HTTP server is still running. Press Ctrl+C to stop.")
 
+    # Остановить автообновление в report.html
+    report_path = f"scans/{target}/report.html"
+    with open(report_path, "a", encoding="utf-8") as f:
+        f.write("""
+<script>
+if (typeof stopAutoRefresh === 'function') stopAutoRefresh();
+</script>
+""")
+
     try:
         while True:
             time.sleep(1)
@@ -239,18 +199,102 @@ def generate_html_report(target, commands):
             window.expandedBlocks = window.expandedBlocks || {{}};
             window.expandedBlocks[id] = false;
         }}
+
+        let lastResults = {{}};
+
+        function saveSelection(containerId) {{
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return null;
+            const range = selection.getRangeAt(0);
+            if (!containerId || !range.commonAncestorContainer.closest) return null;
+            const container = document.getElementById(containerId);
+            if (!container || !container.contains(range.commonAncestorContainer)) return null;
+            return {{
+                text: selection.toString(),
+                startOffset: range.startOffset,
+                endOffset: range.endOffset,
+                anchorNodePath: getNodePath(range.startContainer, container)
+            }};
+        }}
+        function restoreSelection(containerId, saved) {{
+            if (!saved) return;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const node = getNodeFromPath(saved.anchorNodePath, container);
+            if (!node) return;
+            const range = document.createRange();
+            range.setStart(node, saved.startOffset);
+            range.setEnd(node, saved.endOffset);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }}
+        function getNodePath(node, root) {{
+            let path = [];
+            while (node && node !== root) {{
+                let parent = node.parentNode;
+                if (!parent) break;
+                let index = Array.prototype.indexOf.call(parent.childNodes, node);
+                path.unshift(index);
+                node = parent;
+            }}
+            return path;
+        }}
+        function getNodeFromPath(path, root) {{
+            let node = root;
+            for (let idx of path) {{
+                if (!node.childNodes[idx]) return null;
+                node = node.childNodes[idx];
+            }}
+            return node;
+        }}
+
         async function fetchResults() {{
             window.expandedBlocks = window.expandedBlocks || {{}};
             let expanded = Object.assign({{}}, window.expandedBlocks);
+
+            let resultsDiv = document.getElementById('results');
+            let scrollTop = resultsDiv ? resultsDiv.scrollTop : 0;
+            let selection = saveSelection('results');
+
             try {{
-                const resp = await fetch('results.json?' + Date.now());
+                const url = 'results.json?' + Date.now();
+                console.log('Fetching:', url);
+                const resp = await fetch(url, {{ cache: "no-store" }});
                 const data = await resp.json();
-                let html = '';
+
+                // Для каждого блока
                 for (const name of commands) {{
-                    html += renderOutput(name, data[name]);
+                    const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
+                    const blockId = 'block_' + id;
+                    let blockDiv = document.getElementById(blockId);
+
+                    if (!blockDiv) {{
+                        blockDiv = document.createElement('div');
+                        blockDiv.id = blockId;
+                        resultsDiv.appendChild(blockDiv);
+                    }}
+
+                    // Только если изменилось содержимое — обновляем
+                    if (lastResults[name] !== data[name] || !blockDiv.innerHTML) {{
+                        blockDiv.innerHTML = renderOutput(name, data[name]);
+                    }}
                 }}
-                document.getElementById('results').innerHTML = html;
-                // Restore expanded state
+                lastResults = data;
+
+                // Удаляем блоки, которых больше нет в data
+                Array.from(resultsDiv.children).forEach(child => {{
+                    if (child.id && child.id.startsWith('block_')) {{
+                        const name = atob(child.id.replace(/^block_out_/, '').replace(/[^a-zA-Z0-9+/=]/g, ''));
+                        if (!(name in data)) {{
+                            child.remove();
+                        }}
+                    }}
+                }});
+
+                resultsDiv.scrollTop = scrollTop;
+                restoreSelection('results', selection);
+
                 for (const name of commands) {{
                     const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
                     if (expanded[id]) {{
@@ -261,8 +305,17 @@ def generate_html_report(target, commands):
                 document.getElementById('results').innerHTML = '<i>Waiting for results...</i>';
             }}
         }}
-        setInterval(fetchResults, 2000);
+        let fetchInterval = setInterval(fetchResults, 5000);
         window.onload = fetchResults;
+
+        // Останавливаем автообновление (вызывается из Python после завершения)
+        function stopAutoRefresh() {{
+            if (fetchInterval) {{
+                clearInterval(fetchInterval);
+                fetchInterval = null;
+                console.log("Auto-refresh stopped.");
+            }}
+        }}
         </script>
     </head>
     <body>
