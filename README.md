@@ -78,6 +78,37 @@ AutoRecon runs the following tools (if they are installed and available in your 
 
 ---
 
+## Configuring Command Flags
+
+You can easily customize the flags and parameters for each tool by editing the `flags.json` file in the project root.  
+Only the tools listed in `flags.json` will be executed. If you remove a tool from the file, it will not run.
+
+**Example `flags.json`:**
+```json
+{
+    "Nmap Scan": "-sC -sV",
+    "HTTP Headers": "-I",
+    "WhatWeb": "",
+    "Whois Info": "",
+    "Amass Enum": "enum -d",
+    "theHarvester": "-d {target} -b all",
+    "DNSRecon": "-d",
+    "SSLScan": "",
+    "Nikto Scan": "-h",
+    "Gobuster Scan": "dir -u {url} -w /usr/share/wordlists/dirb/common.txt",
+    "Nuclei Scan": "-u {url} -silent",
+    "Subfinder": "-d"
+}
+```
+
+- Use `{target}` and `{url}` as placeholders; they will be replaced automatically.
+- To disable a tool, simply remove its entry from `flags.json`.
+- Changes take effect on the next script run.
+
+This makes it easy to tailor the scan to your needs without editing the main Python code.
+
+---
+
 ## 📄Notes
 
 -   **Stopping:** To stop the script and HTTP server, press `Ctrl+C` in the terminal.
