@@ -52,8 +52,8 @@ AutoRecon runs the following tools (if they are installed and available in your 
 
 2.  **Clone the repository**
     ```sh
-    git clone [https://github.com/yourusername/autorecon.git](https://github.com/yourusername/autorecon.git)
-    cd autorecon
+    git clone https://github.com/hiitaro/AutoRecon.git
+    cd AutoRecon
     ```
 
 3.  **Run the script**
@@ -88,11 +88,19 @@ You can easily add your own commands or tools — just append them to the `comma
 
 ```python
 commands = {
-    # ...
-    "Masscan": f"masscan -p1-65535 {target} --rate=1000",
-    "TestSSL": f"testssl.sh {'https' if protocol == 'https' else 'http'}://{target}",
-    # ...
-}
+    "Nmap Scan": f"nmap -sC -sV {target}",
+    "HTTP Headers": f"curl -I {'https' if protocol == 'https' else 'http'}://{target}",
+    "WhatWeb": f"whatweb {'https' if protocol == 'https' else 'http'}://{target}",
+    "Whois Info": f"whois {target}",
+    "Amass Enum": f"amass enum -d {target}",
+    "theHarvester": f"theHarvester -d {target} -b all",
+    "DNSRecon": f"dnsrecon -d {target}",
+    "SSLScan": f"sslscan {target}",
+    "Nikto Scan": f"nikto -h https://{target}" if protocol == "https" else f"nikto -h http://{target}",
+    "Gobuster Scan": f"gobuster dir -u {'https' if protocol == 'https' else 'http'}://{target} -w /usr/share/wordlists/dirb/common.txt",
+    "Nuclei Scan": f"nuclei -u {'https' if protocol == 'https' else 'http'}://{target} -silent",
+    "Subfinder": f"subfinder -d {target}"
+    }
 ```
 
 ---
