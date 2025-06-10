@@ -55,14 +55,18 @@ AutoRecon runs the following tools (if they are installed and available in your 
     git clone https://github.com/hiitaro/AutoRecon.git
     cd AutoRecon
     ```
-
-3.  **Run the script**
+3.  **📦 Requirements**
+    ```sh
+    pip install -r requirements.txt
+    ```
+    
+4.  **Run the script**
     ```sh
     python autorecon.py <target>
     ```
     where `<target>` is an IP address or domain name.
 
-4.  **A browser will open with the report**
+5.  **A browser will open with the report**
     If it doesn't open automatically, navigate to:
     [http://localhost:8765/report.html](http://localhost:8765/report.html)
 
