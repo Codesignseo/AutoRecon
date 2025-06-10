@@ -178,23 +178,34 @@ def generate_html_report(target, commands):
                 return `<h2>${{name}}</h2><pre class="pre-wrap"><i>Waiting...</i></pre>`;
             }}
             const lines = output.split(/\\r?\\n/);
-            if (lines.length <= 30) {{
+            const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
+            if (lines.length <= 25) {{
                 return `<h2>${{name}}</h2><pre class="pre-wrap">${{escapeHtml(output)}}</pre>`;
             }}
-            const first = lines.slice(0, 50).join('\\n');
-            const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
+            const first = lines.slice(0, 25).join('\\n');
+            const more = lines.slice(0, 35).join('\\n');
             return `<h2>${{name}}</h2>
-                <pre class="pre-wrap" id="${{id}}_short">${{escapeHtml(first)}}\\n<span class="toggle-btn" onclick="showFull('${{id}}')">&#x25BC; Show more</span></pre>
+                <pre class="pre-wrap" id="${{id}}_short">${{escapeHtml(first)}}\\n<span class="toggle-btn" onclick="showMore('${{id}}')">&#x25BC; Show more</span></pre>
+                <pre class="pre-wrap scrollable-output" id="${{id}}_more" style="display:none; max-height:500px;">${{escapeHtml(more)}}\\n<span class="toggle-btn" onclick="showFull('${{id}}')">&#x25BC; Show all</span></pre>
                 <pre class="pre-wrap scrollable-output" id="${{id}}_full" style="display:none;">${{escapeHtml(output)}}\\n<span class="toggle-btn" onclick="showShort('${{id}}')">&#x25B2; Show less</span></pre>`;
+        }}
+        function showMore(id) {{
+            document.getElementById(id + '_short').style.display = 'none';
+            document.getElementById(id + '_more').style.display = '';
+            document.getElementById(id + '_full').style.display = 'none';
+            window.expandedBlocks = window.expandedBlocks || {{}};
+            window.expandedBlocks[id] = 'more';
         }}
         function showFull(id) {{
             document.getElementById(id + '_short').style.display = 'none';
+            document.getElementById(id + '_more').style.display = 'none';
             document.getElementById(id + '_full').style.display = '';
             window.expandedBlocks = window.expandedBlocks || {{}};
             window.expandedBlocks[id] = true;
         }}
         function showShort(id) {{
             document.getElementById(id + '_short').style.display = '';
+            document.getElementById(id + '_more').style.display = 'none';
             document.getElementById(id + '_full').style.display = 'none';
             window.expandedBlocks = window.expandedBlocks || {{}};
             window.expandedBlocks[id] = false;
@@ -297,8 +308,10 @@ def generate_html_report(target, commands):
 
                 for (const name of commands) {{
                     const id = 'out_' + btoa(name).replace(/[^a-zA-Z0-9]/g, '');
-                    if (expanded[id]) {{
+                    if (expanded[id] === true) {{
                         showFull(id);
+                    }} else if (expanded[id] === 'more') {{
+                        showMore(id);
                     }}
                 }}
             }} catch (e) {{
